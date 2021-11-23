@@ -1,0 +1,84 @@
+#resultadosTabla table, th, td{
+
+
+
+    border-bottom: 1px double   #00000026;;
+    border-collapse: collapse;
+    padding: 10px 30px 10px 30px;
+}
+
+#resultadosTabla table > tr > th{
+
+    background-color: #6cb0c12b;
+    padding: 10px 30px 10px 30px;
+}
+
+body{
+    margin-left: 10%;
+    margin-right: 10%;
+    font-family: sans-serif;
+   
+}
+
+
+.selector{
+    font-size: 1rem;
+    background-color: whitesmoke;
+    padding: 10px;
+    border-radius: 6px;
+    margin: 4px;
+    border: 1px solid #ced4da;
+}
+
+html{
+
+    background-color: white;
+}
+
+input{
+    font-size: 1rem;
+    background-color: whitesmoke;
+    padding: 10px;
+    border-radius: 6px;
+    margin: 4px;
+    border: 1px solid #ced4da;
+    
+}
+
+.container{
+
+    margin-top: 2%;
+    display: flex;
+}
+
+.cabeceraFiltros{
+
+    margin-top: 2%;
+}
+
+button{
+    font-size: 1rem;
+    border: none;
+    padding: 10px;
+    background-color: #3B82F6;
+    border-radius: 4px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: ease-in-out;
+    transition-duration: 0.2s;
+}
+
+button:hover{
+
+    cursor: pointer;
+    background-color: #2d58a1;
+}
+
+.resultadosTabla{
+    max-height: 500px;
+    padding-left: 2%;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+

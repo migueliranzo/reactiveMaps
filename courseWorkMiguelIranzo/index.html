@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css"
+        integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
+        crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
+        integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
+        crossorigin=""></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="estilos.css">
+</head>
+
+<body>
+
+    <div>
+        <h1>NOT GOOGLE MAPS</h1>
+    </div>
+
+    <div class="cabeceraFiltros">
+        <label>Latitud</label>
+        <input id="lat" type="text" name="lat">
+        <label style="margin-left: 9px;">Longitud</label>
+        <input id="long" type="text" name="long">
+        <!--  <button type="button" id="button">Buscar Coordenadas</button> -->
+
+    </div>
+    <div class="cabeceraFiltros">
+        <label>Rango de busqueda Km:</label>
+        <input style="max-width: 66px;" readonly id="rangoTxt" type="text" value="50km">
+        <input style="margin: 0; padding: 0; margin-left: 10px; width: 200px;" id="rango" type="range" name="rango">
+        <select name="tipos" id="tipoSelector" class="selector">
+            <option value="empty">Cualquier cosa</option>
+            <option value="1">Restaurantes</option>
+            <option value="2">Tiendas</option>
+            <option value="3">Lugares interesantes</option>
+            <option value="4">Bares</option>
+
+        </select>
+        <button type="button" id="buttonSearch" style="margin-left: 1%;">Buscar</button>
+    </div>
+    <div class="container">
+        <div id="mapDiv" style="width: 800px; height: 500px"></div>
+        <div class="resultadosTabla " id="resultadosTabla"></div>
+    </div>
+    <div style="margin-top: 10px;">
+        <b>Leyenda:</b> Restaurante: <img width="15px"
+            src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png">
+        Bar: <img width="15px"
+            src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png">
+        Lugar interesante: <img width="15px"
+            src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png">
+        Tienda: <img width="15px"
+            src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png">
+    </div>
+    <div class="cabeceraFiltros">
+        <textarea name="resultados" id="resultados" cols="90" rows="20"></textarea>
+    </div>
+
+    <p>Click the button to get your coordinates.</p>
+
+    <button onclick="getLocation()">Try It</button>
+    
+    <p id="demo"></p>
+
+    <script>
+
+        var violetIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        var yellowIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-yellow.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        var redIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+        var greenIcon = new L.Icon({
+            iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [25, 41],
+            iconAnchor: [12, 41],
+            popupAnchor: [1, -34],
+            shadowSize: [41, 41]
+        });
+
+
+        var x = document.getElementById("demo");
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition);
+            } else {
+                x.innerHTML = "Geolocation is not supported by this browser.";
+            }
+        }
+
+        function showPosition(position) {
+            x.innerHTML = "Latitude: " + position.coords.latitude +
+                "<br>Longitude: " + position.coords.longitude;
+        }
+
+        // Posicion por defecto, (ZGZ)
+        var lat = 41.651067478296625;
+        var lon = -0.8815670013427735;
+
+
+        $("#lat").val(lat);
+        $("#long").val(lon);
+
+        // Creamos mapa
+        map = L.map('mapDiv').setView([lat, lon], 6);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
+            maxZoom: 16,
+        }).addTo(map);
+        map.doubleClickZoom.disable();
+
+        //Capa donde guardare los marcadores de los sitios, para separalo del principal
+        var markerGroup = L.layerGroup().addTo(map);
+
+        //Marcador inicial
+        marker = L.marker([lat, lon]).addTo(map);
+        marker.bindPopup("<h2> Este eres tu </h2>");
+        marker.on('mouseover', function (e) {
+            this.openPopup();
+        });
+        marker.on('mouseout', function (e) {
+            this.closePopup();
+        });
+
+
+        //Funcion para poner marcador al clickar el mapa
+        function onMapClick(e) {
+
+            //Limpio los actuales ya que no seran certeros
+            markerGroup.clearLayers();
+            map.removeLayer(marker);
+            marker = new L.marker(e.latlng).addTo(map);
+
+            //Actualizamos los inputs de arriba con las nuevas coordenadas
+            $("#lat").val(e.latlng.lat);
+            $("#long").val(e.latlng.lng);
+
+
+            map.addLayer(marker);
+            map.setView([marker.getLatLng().lat, marker.getLatLng().lng], map.getZoom());
+            //search();  //Puede ser un poco caotica, descomentar si se quiere testear, ademas, si las llamadas fueran mas grandes/lentas no seria lo mas eficiente
+        };
+
+        map.on('dblclick', onMapClick);
+
+        $(document).ready(function () {
+
+            getLocation();
+
+            $("#rango").change(function () {
+
+                var rangoTxt = $("#rango").val() + "Km";
+                $("#rangoTxt").val(rangoTxt);
+
+                search(); //Si las llamadas fueran mas grandes/lentas no seria lo mas eficiente
+            });
+
+            $("#buttonSearch").click(function (event) {
+
+                search();
+            });
+
+            $("#tipoSelector").change(function (event) {
+
+                search(); //Si las llamadas fueran mas grandes/lentas no seria lo mas eficiente
+            });
+
+        });
+
+
+
+
+        function tipoToText(tipo) {
+
+            switch (tipo) {
+                case "1":
+                    return "Restaurante"
+                    break;
+                case "2":
+                    return "Tienda"
+                    break;
+                case "3":
+                    return "Lugar interesante"
+                    break;
+
+                case "4":
+                    return "Bar"
+                    break;
+
+            }
+        }
+
+        function search() {
+
+            var lat = $("#lat").val();
+            var long = $("#long").val();
+            var rango = $("#rango").val();
+            var option = $("#tipoSelector").val();
+
+            var divRes = document.getElementById("resultadosTabla");
+            divRes.innerHTML = '';
+
+
+            $.ajax({
+                type: "POST",
+                url: "ubicacionService.php",
+                data: "lat=" + lat + '&long=' + long + '&rango=' + rango + '&option=' + option,
+                success: function (data) {
+
+                    //Limpieza de marcadores para mostrar los nuevos
+                    markerGroup.clearLayers();
+                    map.removeLayer(marker);
+                    marker = L.marker([lat, long]).addTo(markerGroup);
+                    marker.bindPopup("<h2> Este eres tu </h2>");
+                    marker.on('mouseover', function (e) {
+                        this.openPopup();
+                    });
+                    marker.on('mouseout', function (e) {
+                        this.closePopup();
+                    });
+
+                    $("#resultados").val(data);
+
+                    if (data != "0[]") {
+
+                        // console.log(JSON.parse(data));
+
+                        var ret = JSON.parse(data);
+
+                        showResultsMap(ret);
+
+                        showResultsTable(ret);
+
+                    } else {
+                        //console.log("No data");
+                        divRes.innerHTML = 'Sin Resultados!';
+                    }
+
+                }
+
+            });
+
+            map.setView([lat, long], map.getZoom());
+        }
+
+        function showResultsMap(ret) {
+
+            for (let index = 0; index < ret.length; index++) {
+                const element = ret[index];
+                marker = L.marker([element.latitud, element.longitud], { icon: colorIcon(element.tipo) }).addTo(markerGroup);
+                marker.bindPopup("<b> " + element.nombre + "  </b><br /> " + tipoToText(element.tipo) + " a " + element.distancia.slice(0, 4) + " km de ti");
+                marker.on('mouseover', function (e) {
+                    this.openPopup();
+                });
+                marker.on('mouseout', function (e) {
+                    this.closePopup();
+                });
+
+
+            }
+        }
+
+
+        function showResultsTable(ret) {
+
+
+            var divRes = document.getElementById("resultadosTabla");
+
+            divRes.innerHTML = '';
+
+            var table = document.createElement('table');
+
+            var tr = document.createElement('tr');
+
+            var td1 = document.createElement('th');
+            var td2 = document.createElement('th');
+            var td3 = document.createElement('th');
+
+            var nombre = document.createTextNode("Nombre");
+            var distancia = document.createTextNode("Distancia");
+            var tipo = document.createTextNode("");
+
+            td1.appendChild(nombre);
+            td2.appendChild(distancia);
+            tr.appendChild(td1);
+            tr.appendChild(td2);
+            tr.appendChild(td3);
+
+            table.appendChild(tr);
+
+
+            for (var i = 0; i < ret.length; i++) {
+                const element = ret[i];
+
+                var tr = document.createElement('tr');
+
+                var td1 = document.createElement('td');
+                var td2 = document.createElement('td');
+                var td3 = document.createElement('td');
+
+
+                var text1 = document.createTextNode(element.nombre);
+                var text2 = document.createTextNode(element.distancia.slice(0, 4) + "km");
+                var text3 = document.createTextNode(tipoToText(element.tipo));
+
+                td1.appendChild(text1);
+                td2.appendChild(text2);
+                td3.appendChild(text3);
+                tr.appendChild(td1);
+                tr.appendChild(td2);
+                tr.appendChild(td3);
+
+                table.appendChild(tr);
+            }
+            divRes.appendChild(table);
+
+        }
+
+        function colorIcon(tipo) {
+
+            switch (tipo) {
+                case "1":
+                    return violetIcon;
+                    break;
+                case "2":
+                    return yellowIcon;
+                    break;
+                case "3":
+                    return redIcon;
+                    break;
+
+                case "4":
+                    return greenIcon;
+                    break;
+
+            }
+        }
+
+        function firstLetterCap(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+
+
+    </script>
+</body>
+
+</html>
