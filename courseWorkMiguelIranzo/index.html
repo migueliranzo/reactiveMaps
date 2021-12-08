@@ -15,7 +15,7 @@
 <body>
 
     <div>
-        <h1>NOT GOOGLE MAPS</h1>
+        <h1>Miguel Iranzo Trabajo intermedio</h1>
     </div>
 
     <div class="cabeceraFiltros">
@@ -28,8 +28,8 @@
     </div>
     <div class="cabeceraFiltros">
         <label>Rango de busqueda Km:</label>
-        <input style="max-width: 66px;" readonly id="rangoTxt" type="text" value="50km">
-        <input style="margin: 0; padding: 0; margin-left: 10px; width: 200px;" id="rango" type="range" name="rango">
+        <input style="max-width: 66px;" readonly id="rangoTxt" type="text" value="5km">
+        <input style="margin: 0; padding: 0; margin-left: 10px; width: 300px;" id="rango" value="5" type="range" name="rango">
         <select name="tipos" id="tipoSelector" class="selector">
             <option value="empty">Cualquier cosa</option>
             <option value="1">Restaurantes</option>
@@ -58,13 +58,8 @@
         <textarea name="resultados" id="resultados" cols="90" rows="20"></textarea>
     </div>
 
-    <p>Click the button to get your coordinates.</p>
-
-    <button onclick="getLocation()">Try It</button>
-    
-    <p id="demo"></p>
-
     <script>
+
 
         var violetIcon = new L.Icon({
             iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-violet.png',
@@ -103,31 +98,17 @@
         });
 
 
-        var x = document.getElementById("demo");
 
-        function getLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition);
-            } else {
-                x.innerHTML = "Geolocation is not supported by this browser.";
-            }
-        }
-
-        function showPosition(position) {
-            x.innerHTML = "Latitude: " + position.coords.latitude +
-                "<br>Longitude: " + position.coords.longitude;
-        }
-
-        // Posicion por defecto, (ZGZ)
-        var lat = 41.651067478296625;
-        var lon = -0.8815670013427735;
+        // Posicion por defecto, (MADRID)
+        var lat = 40.416645041288454;
+        var lon = -3.7034503743052487;
 
 
         $("#lat").val(lat);
         $("#long").val(lon);
 
         // Creamos mapa
-        map = L.map('mapDiv').setView([lat, lon], 6);
+        map = L.map('mapDiv').setView([lat, lon], 12);
         L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
             maxZoom: 16,
@@ -147,10 +128,38 @@
             this.closePopup();
         });
 
+        map.on('dblclick', onMapClick);
+
+
+        //Asignamos funciones al boton de busqueda al dropdown y al selector de rango
+        $(document).ready(function () {
+
+            getClientLocation();
+
+            $("#rango").change(function () {
+
+                var rangoTxt = $("#rango").val() + "Km";
+                $("#rangoTxt").val(rangoTxt);
+
+                // search(); //Si las llamadas fueran mas grandes/lentas no seria lo mas eficiente
+            });
+
+            $("#buttonSearch").click(function (event) {
+
+                search();
+            });
+
+            $("#tipoSelector").change(function (event) {
+
+                // search(); //Si las llamadas fueran mas grandes/lentas no seria lo mas eficiente
+            });
+
+        });
+
 
         //Funcion para poner marcador al clickar el mapa
         function onMapClick(e) {
-
+            console.log(e);
             //Limpio los actuales ya que no seran certeros
             markerGroup.clearLayers();
             map.removeLayer(marker);
@@ -166,32 +175,22 @@
             //search();  //Puede ser un poco caotica, descomentar si se quiere testear, ademas, si las llamadas fueran mas grandes/lentas no seria lo mas eficiente
         };
 
-        map.on('dblclick', onMapClick);
 
-        $(document).ready(function () {
+        function getClientLocation() {
 
-            getLocation();
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(searchClientLocation);
+            } else {
+                x.innerHTML = "El navegador no soporta la geolocalización";
+            }
+        }
 
-            $("#rango").change(function () {
+        function searchClientLocation(position) {
 
-                var rangoTxt = $("#rango").val() + "Km";
-                $("#rangoTxt").val(rangoTxt);
-
-                search(); //Si las llamadas fueran mas grandes/lentas no seria lo mas eficiente
-            });
-
-            $("#buttonSearch").click(function (event) {
-
-                search();
-            });
-
-            $("#tipoSelector").change(function (event) {
-
-                search(); //Si las llamadas fueran mas grandes/lentas no seria lo mas eficiente
-            });
-
-        });
-
+            $("#lat").val(position.coords.latitude);
+            $("#long").val(position.coords.longitude);
+            search();
+        }
 
 
 
@@ -222,8 +221,16 @@
             var rango = $("#rango").val();
             var option = $("#tipoSelector").val();
 
+             
+            //Verificacion de si estamos enviando un numero y no algun tipo de cadena u otro dato no deseado
+              if (isNaN(lat) || isNaN(long)){
+                document.getElementById("resultadosTabla").innerHTML = "Formato erroneo de Latitud/Longitud";
+                return;
+              }
+              
+         
+
             var divRes = document.getElementById("resultadosTabla");
-            divRes.innerHTML = '';
 
 
             $.ajax({
@@ -266,6 +273,8 @@
             });
 
             map.setView([lat, long], map.getZoom());
+
+
         }
 
         function showResultsMap(ret) {
@@ -360,11 +369,6 @@
 
             }
         }
-
-        function firstLetterCap(string) {
-            return string.charAt(0).toUpperCase() + string.slice(1);
-        }
-
 
     </script>
 </body>
